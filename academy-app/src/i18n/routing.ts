@@ -7,10 +7,6 @@ export const routing = defineRouting({
       mode: 'as-needed'
    },
    pathnames: {
-      '/': '/',
-      '/pathnames': {
-         es: '/rutas',
-         pt: '/caminhos'
-      }
+      '/': '/'
    }
 });

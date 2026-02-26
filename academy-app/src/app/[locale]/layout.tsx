@@ -1,39 +1,53 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito } from "next/font/google";
 import "./globals.css";
-import { setRequestLocale } from "next-intl/server";
-import { Locale } from "next-intl";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Locale, NextIntlClientProvider } from "next-intl";
+import { ThemeProvider } from "next-themes";
+import { routing } from "~/i18n/routing";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const nunito = Nunito({
+  subsets: ['latin'],
+  variable: '--font-sans',
+})
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
 
-export const metadata: Metadata = {
-  title: "Superteam Academy",
-  description: "Your journey to becoming a super developer starts here.",
-};
+export async function generateMetadata(
+  props: Omit<LayoutProps<'/[locale]'>, 'children'>
+) {
+  const { locale } = await props.params;
 
-export default function RootLayout({
+  const t = await getTranslations({
+    locale: locale as Locale,
+    namespace: 'LocaleLayout'
+  });
+
+  return {
+    title: t('title')
+  };
+}
+
+export default async function LocaleLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+  params
+}: LayoutProps<'/[locale]'>) {
 
-  //TODO: Dynamically set the locale based on user preferences or browser settings
-  setRequestLocale("en" as Locale)
+  const { locale } = await params;
+  setRequestLocale(locale)
 
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${nunito.variable} antialiased`}
       >
-        {children}
+        <NextIntlClientProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            {children}
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
