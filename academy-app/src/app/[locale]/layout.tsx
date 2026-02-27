@@ -1,11 +1,13 @@
-import type { Metadata } from "next";
+
 import { Nunito } from "next/font/google";
-import "./globals.css";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Locale, NextIntlClientProvider } from "next-intl";
 import { ThemeProvider } from "next-themes";
 import { routing } from "~/i18n/routing";
 
+import { DynamicProvider } from "~/components/providers/dynamic-provider";
+
+import "./globals.css";
 const nunito = Nunito({
   subsets: ['latin'],
   variable: '--font-sans',
@@ -45,7 +47,9 @@ export default async function LocaleLayout({
       >
         <NextIntlClientProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            {children}
+            <DynamicProvider>
+              {children}
+            </DynamicProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

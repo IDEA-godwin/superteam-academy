@@ -52,6 +52,11 @@ body {
 @theme {
    --color-foreground: #1b231d;
    --color-background: #f7eacb;
+   --color-academy-bg: #f7eacb;
+   --color-academy-text: #1b231d;
+   --color-academy-primary: #008c4c;
+   --color-accadamy-accent: #ffd23f;
+   
    --radius-sm: calc(var(--radius) - 4px);
    --radius-md: calc(var(--radius) - 2px);
    --radius-lg: var(--radius);

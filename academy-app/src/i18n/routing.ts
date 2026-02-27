@@ -7,6 +7,7 @@ export const routing = defineRouting({
       mode: 'as-needed'
    },
    pathnames: {
-      '/': '/'
+      '/': '/',
+      '/courses': '/courses'
    }
 });
