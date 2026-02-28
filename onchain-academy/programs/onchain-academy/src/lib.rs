@@ -8,7 +8,7 @@ pub mod utils;
 
 use instructions::*;
 
-declare_id!("ACAD1DsS4g3VDkLUtnMgMyYndpXFUgSNEYmvMwxbfFFT");
+declare_id!("ACAD55NBMHFiSUB8TgXXJQk2pV1LgjjZTghbXkWfebUo");
 
 #[program]
 pub mod onchain_academy {

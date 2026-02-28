@@ -5,9 +5,9 @@ import { Locale, NextIntlClientProvider } from "next-intl";
 import { ThemeProvider } from "next-themes";
 import { routing } from "~/i18n/routing";
 
-import { DynamicProvider } from "~/components/providers/dynamic-provider";
-
+import Providers from "./provider";
 import "./globals.css";
+
 const nunito = Nunito({
   subsets: ['latin'],
   variable: '--font-sans',
@@ -47,9 +47,9 @@ export default async function LocaleLayout({
       >
         <NextIntlClientProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <DynamicProvider>
+           <Providers>
               {children}
-            </DynamicProvider>
+            </Providers>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

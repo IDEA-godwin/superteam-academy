@@ -26,7 +26,7 @@ const LandingPageMain = () => {
                   transition={{ duration: 0.3 }}
                >
                   <div>
-                     <h1 className="text-5xl md:text-5xl font-extrabold leading-tight mb-4 dark:text-accadamy-accent">
+                     <h1 className="text-5xl md:text-5xl font-extrabold leading-tight mb-4 text-[#306b3f] dark:text-accadamy-accent">
                         Learn. Build. Earn<br />
                         {/* <span className="text-academy-primary italic">Earn your Place.</span> */}
                      </h1>

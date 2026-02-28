@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/onchain_academy.json`.
  */
 export type OnchainAcademy = {
-  "address": "ACAD1DsS4g3VDkLUtnMgMyYndpXFUgSNEYmvMwxbfFFT",
+  "address": "ACAD55NBMHFiSUB8TgXXJQk2pV1LgjjZTghbXkWfebUo",
   "metadata": {
     "name": "onchainAcademy",
     "version": "0.1.0",

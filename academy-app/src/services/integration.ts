@@ -4,7 +4,7 @@ import { AnchorProvider, Program } from '@coral-xyz/anchor'
 import { PublicKey } from '@solana/web3.js'
 import { OnchainAcademy } from '~/types/onchain_academy'
 
-import IDL from '~/idl/onchain_academy.json'
+import IDL from '~/types/idl/onchain_academy.json'
 
 export async function enrollUserInCourse(_courseID: string, _userPubkey: string) {
 
