@@ -4,9 +4,6 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  // Vercel needs this to find the middleware.js.nft.json file when the
-  // Next.js app lives inside a subdirectory of the repository.
-  outputFileTracingRoot: path.join(__dirname, "../"),
 };
 
 const withNextInt = createNextIntlPlugin()
