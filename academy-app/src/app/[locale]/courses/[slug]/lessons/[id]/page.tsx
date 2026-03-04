@@ -19,7 +19,7 @@ export default function LessonPage() {
 
    const { data: course, isLoading: courseLoading } = useCourseData(slug);
 
-   const lessonResult = course ? findLesson(course, id) : null;
+   const lessonResult = course ? findLesson(course, parseInt(id, 10)) : null;
    const lessonIndex = lessonResult?.lessonIndex ?? -1;
 
    const { data: enrollment, isLoading: enrollLoading } = useCourseEnrollment(

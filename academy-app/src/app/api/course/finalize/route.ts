@@ -4,7 +4,7 @@ import {
    getAssociatedTokenAddressSync,
    TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
-import { AnchorProvider, Program, Wallet, BN } from "@coral-xyz/anchor";
+import { AnchorProvider, Program, BN } from "@coral-xyz/anchor";
 import { OnchainAcademy } from "~/types/onchain_academy";
 import IDL from "~/types/idl/onchain_academy.json"
 import { getCoursePda, getConfigPda, getEnrollmentPda } from "~/lib/derive-pda";
@@ -23,9 +23,12 @@ function getBackendProgram() {
       process.env.NEXT_PUBLIC_DEVNET_URL || "https://api.devnet.solana.com",
       "confirmed",
    );
-   const wallet = new Wallet(backendSigner);
+
+   // NodeWallet is the correct name in Anchor ≥ 0.30 (previously exported as Wallet)
+   const { NodeWallet } = require("@coral-xyz/anchor");
+   const wallet = new NodeWallet(backendSigner);
    const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
-   const program = new Program<OnchainAcademy>(IDL, provider);
+   const program = new Program<OnchainAcademy>(IDL as any, provider);
 
    return { program, backendSigner, connection };
 }
@@ -88,8 +91,8 @@ export async function POST(req: Request) {
       const enrollment = await program.account.enrollment.fetch(enrollmentPda);
       const coursesCompleted = 1; // MVP: increment is tracked off-chain; credential stores running total
       const totalXp = 1000//enrollment.xpEarned instanceof BN
-         // ? enrollment.xpEarned.toNumber()
-         // : (enrollment.xpEarned as any);
+      // ? enrollment.xpEarned.toNumber()
+      // : (enrollment.xpEarned as any);
 
       // Determine track collection from config (stored in config.trackCollections or via course.trackId)
       // MVP: use config authority as fallback payer; track collection must be pre-created by admin

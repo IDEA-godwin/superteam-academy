@@ -72,7 +72,7 @@ export interface TestCase {
 }
 
 export interface Lesson {
-   id: string;
+   id: number;
    title: string;
    module: string;
    duration: string;
@@ -184,7 +184,7 @@ export const DUMMY_COURSE_FILTERS: CourseFilter[] = [
 ];
 
 export const DUMMY_LESSON_CHALLENGE: Lesson = {
-   id: "l7", title: "PDAs and Seeds",
+   id: 17, title: "PDAs and Seeds",
    module: "Accounts & Data Modeling",
    duration: "22 min", xp: 120,
    courseSlug: "anchor-framework",
@@ -345,7 +345,7 @@ pub struct VaultAccount {
 };
 
 export const DUMMY_LESSON_DOCUMENT: Lesson = {
-   id: "l6", title: "#[account] macros deep dive",
+   id: 16, title: "#[account] macros deep dive",
    module: "Accounts & Data Modeling",
    duration: "18 min", xp: 100,
    courseSlug: "anchor-framework",
@@ -398,7 +398,7 @@ Always use \`#[account]\` for your custom program data and leverage constraints 
 };
 
 export const DUMMY_LESSON_VIDEO: Lesson = {
-   id: "l5", title: "Account types in Anchor",
+   id: 15, title: "Account types in Anchor",
    module: "Accounts & Data Modeling",
    duration: "10 min", xp: 50,
    courseSlug: "anchor-framework",
