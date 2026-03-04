@@ -6,16 +6,9 @@ import { useState } from "react"
 import DashboardLayout from '~/components/DashboardLayout'
 
 
-import { useEffect, useTransition } from "react"
-import LoadingSplash from "~/components/LoadingSplash"
-import { dataService } from "~/services/data.service"
 import type { UserProfile } from "~/lib/dummy-data"
-import { useTheme } from "next-themes"
-import { useRouter, usePathname } from "~/i18n/navigation"
-import { useLocale } from "next-intl"
-import { useSession, signIn, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import { useWallet } from "@solana/wallet-adapter-react"
-import { useWalletModal } from "@solana/wallet-adapter-react-ui"
 import { useUserProfile } from "~/hooks/queries/useUserProfile"
 
 const TABS = [

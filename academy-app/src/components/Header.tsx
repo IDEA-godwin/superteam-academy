@@ -12,6 +12,7 @@ import { ChevronDown } from 'lucide-react'
 
 import ThemeToggle from "./ThemeToggle";
 import { useChangeLocale } from '~/hooks/use-change-locale';
+import Link from 'next/link';
 
 
 export default function Header() {
@@ -23,9 +24,11 @@ export default function Header() {
          <div className="md:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center h-16" >
                <div className="flex-1 flex justify-start">
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-background">
-                     Superteam Academy
-                  </h1>
+                  <Link href="/">
+                     <h1 className="text-xl font-bold text-sol-green-dk">
+                        Superteam Academy
+                     </h1>
+                  </Link>  
                </div>
                <div className="md:hidden">
                   <ThemeToggle />

@@ -1,40 +1,113 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import {
-   Lesson,
-   DUMMY_LESSON_CHALLENGE,
-   DUMMY_LESSON_DOCUMENT,
-   DUMMY_LESSON_VIDEO
-} from "~/lib/dummy-data";
-
+import { useCourseData, findLesson } from "~/hooks/queries/useCourseData";
+import { useCourseEnrollment } from "~/hooks/queries/useCourseEnrollment";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useQueryClient } from "@tanstack/react-query";
 import LessonHeader from "../_components/LessonHeader";
 import LessonSidebar from "../_components/LessonSidebar";
 import ChallengeView from "../_components/views/ChallengeView";
 import DocumentView from "../_components/views/DocumentView";
 import VideoView from "../_components/views/VideoView";
+import LoadingSplash from "~/components/LoadingSplash";
 
 export default function LessonPage() {
-   const params = useParams();
-   const id = params?.id as string;
+   const { slug, id } = useParams<{ slug: string; id: string }>();
+   const { publicKey } = useWallet();
+   const queryClient = useQueryClient();
 
-   const [lesson, setLesson] = useState<Lesson>(DUMMY_LESSON_CHALLENGE);
+   const { data: course, isLoading: courseLoading } = useCourseData(slug);
+
+   const lessonResult = course ? findLesson(course, id) : null;
+   const lessonIndex = lessonResult?.lessonIndex ?? -1;
+
+   const { data: enrollment, isLoading: enrollLoading } = useCourseEnrollment(
+      course?.courseId ?? "",
+      course?.lessonCount ?? 0,
+   );
+
    const [sidebarOpen, setSidebarOpen] = useState(false);
-   const [completed, setCompleted] = useState(false);
 
-   useEffect(() => {
-      // Simulate fetching lesson data based on ID
-      if (id === "l5") setLesson(DUMMY_LESSON_VIDEO);
-      else if (id === "l6") setLesson(DUMMY_LESSON_DOCUMENT);
-      else setLesson(DUMMY_LESSON_CHALLENGE);
+   // Whether this lesson is already marked done on-chain
+   const alreadyDone = enrollment?.lessonsDone.has(lessonIndex) ?? false;
+   const [localDone, setLocalDone] = useState(false);
+   const completed = alreadyDone || localDone;
 
-      setCompleted(false); // Reset completion state on navigation
-   }, [id]);
+   /** Called by all three views when the learner finishes the lesson content */
+   const handleComplete = useCallback(async () => {
+      if (completed || !publicKey || !course || lessonIndex < 0) return;
+      try {
+         const res = await fetch("/api/course/complete-lesson", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+               courseId: course.courseId,
+               lessonIndex,
+               learnerPubkey: publicKey.toBase58(),
+            }),
+         });
+         if (!res.ok) {
+            const err = await res.json();
+            // 409 = already completed — treat as success
+            if (err.error !== "LessonAlreadyCompleted") {
+               console.error("[complete-lesson]", err.error);
+               return;
+            }
+         }
+         setLocalDone(true);
+         // Invalidate enrollment cache so progress bar re-reads bitmap
+         queryClient.invalidateQueries({ queryKey: ["enrollment", course.courseId, publicKey.toBase58()] });
+      } catch (e) {
+         console.error("[complete-lesson]", e);
+      }
+   }, [completed, publicKey, course, lessonIndex, queryClient]);
+
+   if (courseLoading || enrollLoading) {
+      return <LoadingSplash message="Loading lesson…" fullScreen={false} />;
+   }
+
+   if (!course || !lessonResult) {
+      return (
+         <div className="flex items-center justify-center h-full text-sol-muted">
+            Lesson not found.
+         </div>
+      );
+   }
+
+   const { lesson, module: lessonModule } = lessonResult;
+
+   // Build a Lesson-compatible shape for the existing view components
+   const legacyLesson = {
+      id: lesson.id,
+      title: lesson.title,
+      module: lessonModule.title,
+      duration: lesson.duration,
+      xp: course.xpPerLesson,
+      courseSlug: slug,
+      courseTitle: course.title,
+      type: lesson.lessonType === 1 ? "video" as const
+         : lesson.lessonType === 3 ? "challenge" as const
+            : "document" as const,
+      content: "",
+      body: lesson.body,
+      markdownContent: lesson.markdownContent,
+      videoUrl: lesson.videoUrl,
+      starterCode: lesson.starterCode,
+      solutionCode: lesson.solutionCode,
+      hints: lesson.hints,
+      testCases: lesson.testCases?.map((tc, i) => ({
+         id: `tc-${i}`,
+         description: tc.expectedOutput,
+         validationSnippet: tc.input,
+      })),
+      language: (lesson.starterCode as any)?.language ?? "rust",
+   };
 
    return (
       <div className="flex flex-col h-full w-full bg-sol-bg font-display overflow-hidden relative">
          <LessonHeader
-            lesson={lesson}
+            lesson={legacyLesson}
             completed={completed}
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
@@ -42,31 +115,30 @@ export default function LessonPage() {
 
          <div className="flex flex-1 overflow-hidden relative">
             <LessonSidebar
-               moduleName={lesson.module}
-               courseSlug={lesson.courseSlug}
+               moduleName={lessonModule.title}
+               courseSlug={slug}
                sidebarOpen={sidebarOpen}
                setSidebarOpen={setSidebarOpen}
             />
 
-            {/* --- The Dynamic Content Router --- */}
             <main className="flex-1 overflow-y-auto">
-               {lesson.type === "challenge" && (
-                  <ChallengeView lesson={lesson} completed={completed} setCompleted={setCompleted} />
+               {lesson.lessonType === 3 && (
+                  <ChallengeView lesson={legacyLesson} completed={completed} setCompleted={handleComplete} />
                )}
-               {lesson.type === "document" && (
-                  <DocumentView lesson={lesson} completed={completed} setCompleted={setCompleted} />
+               {lesson.lessonType === 2 && (
+                  <DocumentView lesson={legacyLesson} completed={completed} setCompleted={handleComplete} />
                )}
-               {lesson.type === "video" && (
-                  <VideoView lesson={lesson} completed={completed} setCompleted={setCompleted} />
+               {lesson.lessonType === 1 && (
+                  <VideoView lesson={legacyLesson} completed={completed} setCompleted={handleComplete} />
                )}
             </main>
          </div>
 
-         {/* Bottom progress strip */}
+         {/* Progress strip */}
          <div className="h-1 bg-sol-border shrink-0 z-30 relative">
             <div
                className="h-full bg-linear-to-r from-sol-green to-sol-forest transition-all duration-700"
-               style={{ width: completed ? "100%" : "60%" }}
+               style={{ width: completed ? "100%" : "0%" }}
             />
          </div>
       </div>

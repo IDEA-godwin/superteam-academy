@@ -1,11 +1,12 @@
 import { useEffect } from "react";
 import { Lesson } from "~/lib/dummy-data";
 import MarkdownRenderer from "~/components/MarkdownRenderer";
+import PortableTextRenderer from "~/components/PortableTextRenderer";
 
 interface Props {
    lesson: Lesson;
    completed: boolean;
-   setCompleted: (val: boolean) => void;
+   setCompleted: () => void | Promise<void>;
 }
 
 export default function DocumentView({ lesson, completed, setCompleted }: Props) {
@@ -13,7 +14,7 @@ export default function DocumentView({ lesson, completed, setCompleted }: Props)
    useEffect(() => {
       if (!completed) {
          const t = setTimeout(() => {
-            setCompleted(true);
+            setCompleted();
          }, 3000);
          return () => clearTimeout(t);
       }
@@ -33,7 +34,14 @@ export default function DocumentView({ lesson, completed, setCompleted }: Props)
                <h1 className="text-4xl lg:text-5xl font-extrabold text-sol-text leading-tight mb-4">{lesson.title}</h1>
             </div>
 
-            <MarkdownRenderer content={lesson.content} />
+            {/* Body: Portable Text (Sanity) → markdownContent → raw markdown (dummy data) */}
+            {lesson.body ? (
+               <PortableTextRenderer value={lesson.body} />
+            ) : lesson.markdownContent ? (
+               <MarkdownRenderer content={lesson.markdownContent} />
+            ) : (
+               <MarkdownRenderer content={lesson.content} />
+            )}
 
             <div className="mt-16 pt-8 border-t border-sol-border text-center">
                <p className="text-sol-muted text-sm px-6">

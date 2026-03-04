@@ -8,6 +8,7 @@ import { GoogleAnalytics } from '@next/third-parties/google';
 import Script from 'next/script';
 
 import Providers from "./provider";
+import { Toaster } from "~/components/ui/sonner"
 import "./globals.css";
 
 const nunito = Nunito({
@@ -54,6 +55,7 @@ export default async function LocaleLayout({
             </Providers>
           </ThemeProvider>
         </NextIntlClientProvider>
+        <Toaster richColors position="top-right" />
         <GoogleAnalytics gaId="G-STACADEMY26" />
         <Script id="heatmap-analytics" strategy="afterInteractive">
           {`console.log("Heatmap initialized in privacy-mode.");`}

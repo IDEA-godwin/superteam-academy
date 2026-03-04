@@ -16,6 +16,8 @@ export interface UserDBRecord {
    rank?: number;
    xp?: number;
    streak?: number;
+   lastActivityDate?: string | Date;
+   activityHistory?: string[];
    bio?: string;
    twitter?: string;
    github?: string;
@@ -31,8 +33,18 @@ export interface UserSessionPayload {
    publicKey?: string;
 }
 
+export interface XPLedgerRecord {
+   id: string;
+   userId: string;
+   wallet?: string;
+   courseId: string;
+   xpAmount: number;
+   timestamp: string; // ISO Date String
+}
+
 type DatabaseSchema = {
    users: UserDBRecord[];
+   xpHistory: XPLedgerRecord[];
 }
 
 export class UserService {
@@ -47,7 +59,7 @@ export class UserService {
       }
 
       const file = path.join(dataDir, 'db.json');
-      const defaultData: DatabaseSchema = { users: [] };
+      const defaultData: DatabaseSchema = { users: [], xpHistory: [] };
       this.dbPromise = JSONFilePreset(file, defaultData);
    }
 
@@ -117,6 +129,52 @@ export class UserService {
       return updatedUser;
    }
 
+   public async trackActivity(userId: string): Promise<UserDBRecord> {
+      const user = await this.getUser(userId);
+      if (!user) throw new Error("User not found");
+
+      const now = new Date();
+      const todayString = now.toISOString().split("T")[0];
+
+      let newStreak = user.streak || 0;
+      let lastActivityDateStr = "";
+      let activityHistory = user.activityHistory || [];
+
+      if (user.lastActivityDate) {
+         const lastDate = new Date(user.lastActivityDate);
+         lastActivityDateStr = lastDate.toISOString().split("T")[0];
+      }
+
+      if (lastActivityDateStr === todayString) {
+         // Already tracked today
+         return user;
+      }
+
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayString = yesterday.toISOString().split("T")[0];
+
+      if (lastActivityDateStr === yesterdayString) {
+         newStreak += 1;
+      } else {
+         newStreak = 1;
+      }
+
+      if (!activityHistory.includes(todayString)) {
+         activityHistory.push(todayString);
+      }
+
+      // Keep only last 60 days to prevent unbounded DB growth
+      if (activityHistory.length > 60) {
+         activityHistory = activityHistory.slice(-60);
+      }
+
+      return await this.updateUser(userId, {
+         streak: newStreak,
+         lastActivityDate: now,
+         activityHistory,
+      });
+   }
 
 
    // ─── AUTHENTICATION FLOWS ──────────────────────────────────────────────────
@@ -222,6 +280,33 @@ export class UserService {
          console.error("[UserService] JWT Verification Failed:", error);
          return null;
       }
+   }
+
+   /**
+    * RECORDS XP EVENT TO THE LEDGER
+    */
+   public async trackXpReward(userId: string, courseId: string, xpAmount: number, wallet?: string): Promise<XPLedgerRecord> {
+      const db = await this.getDb();
+
+      const record: XPLedgerRecord = {
+         id: `xp_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+         userId,
+         wallet,
+         courseId,
+         xpAmount,
+         timestamp: new Date().toISOString()
+      };
+
+      // Ensure array exists (migration safety for existing DBs)
+      if (!db.data.xpHistory) {
+         db.data.xpHistory = [];
+      }
+
+      db.data.xpHistory.push(record);
+      await db.write();
+
+      console.log(`[XP Ledger] Mined ${xpAmount} XP for user ${userId} in course ${courseId}`);
+      return record;
    }
 }
 

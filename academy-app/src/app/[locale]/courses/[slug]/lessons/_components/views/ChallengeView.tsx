@@ -1,16 +1,25 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Lesson } from "~/lib/dummy-data";
 import MarkdownRenderer from "~/components/MarkdownRenderer";
+import PortableTextRenderer from "~/components/PortableTextRenderer";
 import CodeEditor from "../CodeEditor";
+import type { SanityCodeField } from "~/types/lesson";
 
 interface Props {
    lesson: Lesson;
    completed: boolean;
-   setCompleted: (val: boolean) => void;
+   setCompleted: () => void | Promise<void>;
 }
 
 export default function ChallengeView({ lesson, completed, setCompleted }: Props) {
-   const [code, setCode] = useState(lesson.starterCode || "");
+   /** Safely extract the code string from either a SanityCodeField object or a plain string */
+   const codeStr = (field: SanityCodeField | string | undefined): string => {
+      if (!field) return "";
+      if (typeof field === "string") return field;
+      return field.code;
+   };
+
+   const [code, setCode] = useState(codeStr(lesson.starterCode));
    const [showSolution, setShowSolution] = useState(false);
    const [hintIdx, setHintIdx] = useState(-1);
    const [panelWidth, setPanelWidth] = useState(50);
@@ -48,7 +57,12 @@ export default function ChallengeView({ lesson, completed, setCompleted }: Props
                   <h1 className="text-2xl font-extrabold text-sol-text">{lesson.title}</h1>
                </div>
 
-               <MarkdownRenderer content={lesson.content} />
+               {/* Lesson body: Portable Text (from Sanity) or raw markdown (dummy data) */}
+               {lesson.body ? (
+                  <PortableTextRenderer value={lesson.body} />
+               ) : (
+                  <MarkdownRenderer content={lesson.content} />
+               )}
 
                {/* Hints */}
                {lesson.hints && lesson.hints.length > 0 && (
@@ -101,10 +115,10 @@ export default function ChallengeView({ lesson, completed, setCompleted }: Props
                         <div className="mt-3 animate-fade-up">
                            <pre className="bg-sol-bg border border-sol-border rounded-xl p-4 overflow-x-auto
                                  font-mono text-xs text-sol-green leading-relaxed">
-                              <code>{lesson.solutionCode}</code>
+                              <code>{codeStr(lesson.solutionCode)}</code>
                            </pre>
                            <button
-                              onClick={() => { setCode(lesson.solutionCode!); setShowSolution(false); }}
+                              onClick={() => { setCode(codeStr(lesson.solutionCode)); setShowSolution(false); }}
                               className="mt-2 sol-btn-ghost text-xs py-1.5">
                               Copy to editor
                            </button>
@@ -128,10 +142,10 @@ export default function ChallengeView({ lesson, completed, setCompleted }: Props
          <CodeEditor
             code={code}
             setCode={setCode}
-            starterCode={lesson.starterCode || ""}
+            starterCode={codeStr(lesson.starterCode)}
             language={lesson.language}
             testCases={lesson.testCases}
-            onComplete={() => setCompleted(true)}
+            onComplete={() => setCompleted()}
          />
       </div>
    );

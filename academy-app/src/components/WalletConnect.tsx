@@ -18,6 +18,7 @@ import {
    DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 import AuthModal from './AuthModal'
+import LoadingSplash from './LoadingSplash'
 
 export default function ConnectWallet({ title }: { title?: string }) {
    const { push } = useRouter()
@@ -25,15 +26,15 @@ export default function ConnectWallet({ title }: { title?: string }) {
    const { connected, disconnect, publicKey } = useWallet()
    const { setVisible } = useWalletModal()
 
-   const { isAdmin, authenticated } = useAuthenticate()
+   const { loading, isAdmin, authenticated } = useAuthenticate()
    const [isAuthOpen, setIsAuthOpen] = useState(false)
    const { data: session } = useSession()
 
    useEffect(() => {
-      if (typeof window === 'undefined') return
+      console.log("loading", loading)
       if (!authenticated && pathname !== '/') push('/');
-      if (connected && pathname === '/') {
-         if (authenticated) return;
+      if (connected && !loading) {
+         if (authenticated && pathname !== "/") return;
          if (!isAdmin) push('/dashboard');
          else push('/admin');
          // @ts-ignore
@@ -41,27 +42,23 @@ export default function ConnectWallet({ title }: { title?: string }) {
             // @ts-ignore
             sessionStorage.setItem('lms_academy_user_token', session.user.customToken);
          }
-
-         if (connected && publicKey) {
-            // Call our custom backend endpoint to get/issue tokens for Web3 Wallet
-            fetch('/api/user', {
-               method: 'POST',
-               headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${sessionStorage.getItem('lms_academy_user_token') || ''}`
-               },
-               body: JSON.stringify({ wallet: publicKey.toBase58() })
-            }).then(res => res.json()).then(data => {
-               if (data?.token) {
-                  sessionStorage.setItem('lms_academy_user_token', data.token);
-               }
-            }).catch(console.error);
-         }
+         fetch('/api/user', {
+            method: 'POST',
+            headers: {
+               'Content-Type': 'application/json',
+               'Authorization': `Bearer ${sessionStorage.getItem('lms_academy_user_token') || ''}`
+            },
+            body: JSON.stringify({ wallet: publicKey?.toBase58() })
+         }).then(res => res.json()).then(data => {
+            if (data?.token) {
+               sessionStorage.setItem('lms_academy_user_token', data.token);
+            }
+         }).catch(console.error);
       }
-   }, [connected, publicKey, authenticated, isAdmin, pathname, push, session]);
+   }, [connected, publicKey, loading, authenticated, isAdmin, pathname, push, session]);
 
 
-
+   // if (loading) return <LoadingSplash />;
 
    return authenticated ? (
       <DropdownMenu>

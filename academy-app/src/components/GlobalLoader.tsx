@@ -3,6 +3,7 @@
 import { useIsFetching } from '@tanstack/react-query';
 import { useAuthenticate } from '~/hooks/use-authenticate';
 import LoadingSplash from './LoadingSplash';
+import { useEffect } from 'react';
 
 export default function GlobalLoader() {
    // Returns the number of active background fetches from tanstack query
@@ -10,6 +11,10 @@ export default function GlobalLoader() {
 
    // We still want to respect local auth handshakes
    const { loading: isAuthLoading } = useAuthenticate();
+
+   useEffect(() => {
+         console.log(isAuthLoading)
+   })
 
    const isAppLoading = isAuthLoading || isFetching > 0;
 

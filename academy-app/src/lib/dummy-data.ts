@@ -54,6 +54,8 @@ export interface LeaderboardUser {
    streak: number;
    badge: string;
    courses: string[];
+   country?: string;   // emoji flag
+   twitter?: string;   // @handle
 }
 
 export interface CourseFilter {
@@ -83,8 +85,12 @@ export interface Lesson {
    next?: { id: string; title: string };
 
    videoUrl?: string;
-   starterCode?: string;
-   solutionCode?: string;
+   /** Portable Text blocks — populated when lesson is fetched from Sanity */
+   body?: any[];
+   /** Raw markdown body — populated from Sanity markdownContent field */
+   markdownContent?: string;
+   starterCode?: string | { _type: "code"; code: string; language: string };
+   solutionCode?: string | { _type: "code"; code: string; language: string };
    language?: "rust" | "typescript" | "javascript" | "json";
    testCases?: TestCase[];
    hints?: string[];
@@ -145,22 +151,31 @@ export const DUMMY_COMPLETED_COURSES: CompletedCourse[] = [
 ];
 
 export const DUMMY_LEADERBOARD: LeaderboardUser[] = [
-   { rank: 1, username: "0xTanaka", avatar: "🧑🏻‍💻", name: "Tanaka K.", xp: 24800, level: 28, streak: 45, badge: "🔥", courses: ["anchor-framework", "defi-protocols"] },
-   { rank: 2, username: "devnathi", avatar: "👩🏽‍💻", name: "Priya N.", xp: 22100, level: 26, streak: 31, badge: "⚡", courses: ["anchor-framework", "program-security"] },
-   { rank: 3, username: "sol_void", avatar: "🧑‍💻", name: "void.sol", xp: 19600, level: 24, streak: 22, badge: "💎", courses: ["defi-protocols", "nft-marketplace"] },
-   { rank: 4, username: "anchor_pro", avatar: "👨🏿‍💻", name: "Kwame A.", xp: 17200, level: 22, streak: 18, badge: "🔐", courses: ["anchor-framework", "program-security"] },
-   { rank: 5, username: "rustacean", avatar: "🧑🏽‍💻", name: "Rustacean", xp: 15900, level: 20, streak: 14, badge: "🦀", courses: ["rust-for-solana"] },
-   { rank: 6, username: "defi_kim", avatar: "👩🏻‍💻", name: "Ji-Young K.", xp: 14300, level: 19, streak: 9, badge: "📊", courses: ["defi-protocols"] },
-   { rank: 7, username: "sol_maya", avatar: "👩🏾‍💻", name: "Maya Okonkwo", xp: 8420, level: 14, streak: 22, badge: "🌱", courses: ["anchor-framework", "defi-protocols"] },
-   { rank: 8, username: "sol_anon42", avatar: "🧑🏿‍💻", name: "anon42", xp: 7900, level: 13, streak: 7, badge: "🕶", courses: ["intro-to-solana"] },
-   { rank: 9, username: "anchor_dev", avatar: "👨🏻‍💻", name: "Marcus T.", xp: 6700, level: 11, streak: 5, badge: "⚓", courses: ["anchor-framework"] },
-   { rank: 10, username: "newbie_sol", avatar: "👶", name: "newbie.sol", xp: 4200, level: 8, streak: 3, badge: "🌐", courses: ["intro-to-solana"] },
-   { rank: 11, username: "rustlover", avatar: "🧑‍🔬", name: "Rustlover", xp: 3800, level: 7, streak: 2, badge: "🦀", courses: ["rust-for-solana"] },
-   { rank: 12, username: "nft_hunter", avatar: "🎨", name: "NFT Hunter", xp: 3100, level: 6, streak: 1, badge: "◈", courses: ["nft-marketplace"] },
+   { rank: 1, username: "0xTanaka", avatar: "🧑🏻‍💻", name: "Tanaka K.", xp: 24800, level: 28, streak: 45, badge: "👑", country: "🇯🇵", twitter: "@0xTanaka", courses: ["anchor-framework", "defi-protocols", "program-security"] },
+   { rank: 2, username: "devnathi", avatar: "👩🏽‍💻", name: "Priya N.", xp: 22100, level: 26, streak: 31, badge: "⚡", country: "🇮🇳", twitter: "@devnathi", courses: ["anchor-framework", "program-security", "nft-marketplace"] },
+   { rank: 3, username: "sol_void", avatar: "🧑‍💻", name: "void.sol", xp: 19600, level: 24, streak: 22, badge: "💎", country: "🇧🇷", twitter: "@sol_void", courses: ["defi-protocols", "nft-marketplace"] },
+   { rank: 4, username: "anchor_pro", avatar: "👨🏿‍💻", name: "Kwame A.", xp: 17200, level: 22, streak: 18, badge: "🔐", country: "🇬🇭", twitter: "@kwame_sol", courses: ["anchor-framework", "program-security"] },
+   { rank: 5, username: "rustacean", avatar: "🧑🏽‍💻", name: "RustGod", xp: 15900, level: 20, streak: 14, badge: "🦀", country: "🇩🇪", twitter: "@rustacean_", courses: ["rust-for-solana", "anchor-framework"] },
+   { rank: 6, username: "defi_kim", avatar: "👩🏻‍💻", name: "Ji-Young K.", xp: 14300, level: 19, streak: 9, badge: "📊", country: "🇰🇷", twitter: "@defi_kim", courses: ["defi-protocols", "anchor-framework"] },
+   { rank: 7, username: "sol_maya", avatar: "👩🏾‍💻", name: "Maya Okonkwo", xp: 8420, level: 14, streak: 22, badge: "🌱", country: "🇳🇬", twitter: "@maya_onchain", courses: ["anchor-framework", "defi-protocols"] },
+   { rank: 8, username: "sol_anon42", avatar: "🧑🏿‍💻", name: "anon42.sol", xp: 7900, level: 13, streak: 7, badge: "🕶️", country: "🇺🇸", twitter: undefined, courses: ["intro-to-solana", "anchor-framework"] },
+   { rank: 9, username: "anchor_dev", avatar: "👨🏻‍💻", name: "Marcus T.", xp: 6700, level: 11, streak: 5, badge: "⚓", country: "🇬🇧", twitter: "@marcust_sol", courses: ["anchor-framework"] },
+   { rank: 10, username: "seraph_sol", avatar: "👩🏼‍💻", name: "Seraph", xp: 6100, level: 10, streak: 12, badge: "🌊", country: "🇦🇺", twitter: "@seraph_sol", courses: ["intro-to-solana", "nft-marketplace"] },
+   { rank: 11, username: "byte_wizard", avatar: "🧙🏽", name: "ByteWizard", xp: 5400, level: 10, streak: 8, badge: "🔮", country: "🇪🇸", twitter: "@byte_wizard", courses: ["rust-for-solana", "defi-protocols"] },
+   { rank: 12, username: "mia_devs", avatar: "👩🏻‍🔬", name: "Mia Chen", xp: 4900, level: 9, streak: 4, badge: "🧪", country: "🇹🇼", twitter: "@mia_builds", courses: ["program-security"] },
+   { rank: 13, username: "newbie_sol", avatar: "👶", name: "newbie.sol", xp: 4200, level: 8, streak: 3, badge: "🌐", country: "🇲🇽", twitter: undefined, courses: ["intro-to-solana"] },
+   { rank: 14, username: "rustlover", avatar: "🧑‍🔬", name: "RustLover", xp: 3800, level: 7, streak: 2, badge: "🦀", country: "🇷🇺", twitter: "@rustlover_dev", courses: ["rust-for-solana"] },
+   { rank: 15, username: "nft_hunter", avatar: "🎨", name: "NFT Hunter", xp: 3100, level: 6, streak: 1, badge: "🖼️", country: "🇫🇷", twitter: "@nft_hunter_", courses: ["nft-marketplace"] },
+   { rank: 16, username: "lamport_lad", avatar: "🧑🏼‍💻", name: "Lamport Lad", xp: 2700, level: 5, streak: 6, badge: "🔦", country: "🇮🇪", twitter: "@lamport_lad", courses: ["intro-to-solana", "anchor-framework"] },
+   { rank: 17, username: "defi_sosa", avatar: "👨🏽‍💻", name: "Carlos S.", xp: 2300, level: 5, streak: 3, badge: "💹", country: "🇨🇴", twitter: "@cdefi_sosa", courses: ["defi-protocols"] },
+   { rank: 18, username: "zero_to_sol", avatar: "🚀", name: "zero2sol", xp: 1900, level: 4, streak: 5, badge: "🛸", country: "🇿🇦", twitter: "@zero_to_sol", courses: ["intro-to-solana"] },
+   { rank: 19, username: "validator_vik", avatar: "🧑🏾‍💻", name: "Vik Patel", xp: 1400, level: 3, streak: 2, badge: "✅", country: "🇮🇳", twitter: "@validatorvik", courses: ["intro-to-solana"] },
+   { rank: 20, username: "gm_everyday", avatar: "☀️", name: "gm every day", xp: 900, level: 2, streak: 11, badge: "🌅", country: "🇵🇭", twitter: "@gm_everyday", courses: ["intro-to-solana"] },
 ];
 
 export const DUMMY_COURSE_FILTERS: CourseFilter[] = [
    { slug: "all", label: "All Courses" },
+   { slug: "intro-to-solana", label: "Intro to Solana" },
    { slug: "anchor-framework", label: "Anchor Framework" },
    { slug: "defi-protocols", label: "DeFi Protocols" },
    { slug: "program-security", label: "Program Security" },

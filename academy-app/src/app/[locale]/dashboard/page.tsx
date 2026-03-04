@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import DashboardLayout from "~/components/DashboardLayout";
+import { useAnchorWallet, useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useUserProfile } from "~/hooks/queries/useUserProfile";
+import { useLeveling } from "~/hooks/use-leveling";
+import { useTranslations } from "next-intl";
+import { AnchorProvider, Program, BN } from "@coral-xyz/anchor";
+import { OnchainAcademy } from "~/types/onchain_academy";
+import IDL from "~/types/idl/onchain_academy.json";
+import { countCompletedLessons, courseService } from "~/services/course.service";
+import { useEffect, useMemo, useState } from "react";
+import { SanityCourseData, useCourseList } from "~/hooks/queries/useCourseData";
+import { Course } from "~/types/course";
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
-const USER = {
-   name: "Maya Okonkwo",
-   avatar: "👩🏾‍💻",
-   level: 14,
-   xp: 8420,
-   xpToNext: 1580,
-   rank: 7,
-   streak: 22,
-};
 
 const IN_PROGRESS = [
    {
@@ -61,14 +63,6 @@ const ACTIVITY = [
    { time: "4d ago", icon: "📚", text: "Started course: Building DeFi Protocols" },
 ];
 
-// 4 weeks of streak data (1 = active, 0 = missed)
-const STREAK_GRID = [
-   0, 1, 1, 1, 0, 1, 1,
-   1, 1, 0, 1, 1, 1, 1,
-   0, 1, 1, 1, 1, 0, 1,
-   1, 1, 1, 1, 1, 1, 1,
-];
-const WEEK_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 
 // ── SUB-COMPONENTS ─────────────────────────────────────────────────────────────
 function ProgressBar({ pct, yellow = false }: { pct: number; yellow?: boolean }) {
@@ -103,6 +97,63 @@ function SectionHead({ children }: { children: React.ReactNode }) {
 
 // ── PAGE ───────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
+   const { publicKey } = useWallet();
+   const { data: profileData } = useUserProfile(publicKey?.toBase58());
+   const { xp, level, xpToNext } = useLeveling();
+
+   const dbUser = profileData?.user;
+   const streak = dbUser?.streak || 0;
+   const rank = dbUser?.rank || 0;
+   const t = useTranslations("Dashboard");
+
+   const { connection } = useConnection()
+   const anchorWallet = useAnchorWallet()
+
+   const { data: courseList, isLoading: courseListLoading } = useCourseList()
+
+   const [courses, setCourses] = useState<SanityCourseData[] | undefined>(undefined)
+   const [progress, setProgress] = useState<{ percent: number, next: number }[]>([])
+
+   const buildProgram = useMemo(() => {
+      if (!connection || !anchorWallet) return;
+      const provider = new AnchorProvider(connection, anchorWallet, { commitment: "confirmed" });
+      const program = new Program<OnchainAcademy>(IDL, provider);
+      return program;
+   }, [connection, anchorWallet])
+
+   // Bug fix 1: enrollments must be fetched in a useEffect, not an async useMemo
+   const [enrollments, setEnrollments] = useState<Awaited<ReturnType<typeof courseService.getAllWalletEnrollments>> | undefined>(undefined)
+
+   useEffect(() => {
+      if (!buildProgram || !anchorWallet) return;
+      courseService.getAllWalletEnrollments(buildProgram, anchorWallet).then(setEnrollments);
+   }, [buildProgram, anchorWallet])
+
+   // Bug fix 2: define helper before the effect that uses it
+   const progressPercentage = (completed: number, lessonCount: number) => {
+      return (completed / lessonCount) * 100;
+   }
+
+   useEffect(() => {
+      (async () => {
+         if (!buildProgram || !enrollments) return;
+         const pCourses: Promise<{ course: Course | null, progress: { percent: number, next: number } }>[] | undefined = enrollments
+            ?.map(async (e) => {
+               const completedCourses = countCompletedLessons(e.account.lessonFlags)
+               const course = await courseService.getCourseOnchain(buildProgram, e.account.course)
+               const prog = { percent: course?.lessonCount ? progressPercentage(completedCourses, course?.lessonCount) : 0, next: completedCourses }
+               return { course, progress: prog }
+            })
+         if (pCourses) {
+            const resolved = await Promise.all(pCourses)
+            const filter = courseList?.filter(c => !!resolved.find(course => course?.course?.courseId === c.courseId))
+            setProgress(resolved.map(c => c.progress))
+            setCourses(filter)
+         };
+      })()
+   }, [enrollments, courseList])
+
+
    return (
       <DashboardLayout>
          <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 animate-fade-up">
@@ -110,25 +161,23 @@ export default function DashboardPage() {
             {/* ── LEFT COLUMN ── */}
             <div className="flex flex-col gap-6">
 
-               {/* XP / Level / Rank hero card */}
                <div className="card-base p-6">
                   <div className="flex items-start justify-between mb-4">
                      <div>
-                        <p className="text-[11px] font-bold text-sol-muted uppercase tracking-widest mb-1">Your Progress</p>
+                        <p className="text-[11px] font-bold text-sol-muted uppercase tracking-widest mb-1">{t('yourProgress')}</p>
                         <div className="flex items-end gap-3">
-                           <span className="text-3xl font-black text-sol-text">Level {USER.level}</span>
-                           {/* <span className="text-sm font-bold text-sol-green mb-0.5">{USER.xp.toLocaleString()} XP</span> */}
+                           <span className="text-3xl font-black text-sol-text">{t('level', { level })}</span>
                         </div>
                      </div>
                      <div className="text-right">
-                        <div className="text-2xl font-black text-sol-text">Rank #{USER.rank}</div>
-                        <div className="text-xs text-sol-muted">Global Leaderboard</div>
+                        <div className="text-2xl font-black text-sol-text">{t('rank', { rank })}</div>
+                        <div className="text-xs text-sol-muted">{t('globalLeaderboard')}</div>
                      </div>
                   </div>
-                  <ProgressBar pct={(USER.xp / (USER.xp + USER.xpToNext)) * 100} />
+                  <ProgressBar pct={(xp / (xp + xpToNext)) * 100} />
                   <div className="flex justify-between mt-2 text-xs text-sol-muted">
-                     <span>{USER.xp.toLocaleString()} XP</span>
-                     <span>{USER.xpToNext.toLocaleString()} XP to Level {USER.level + 1}</span>
+                     <span>{xp.toLocaleString()} XP</span>
+                     <span>{t('xpToNext', { xp: xpToNext.toLocaleString(), next: level + 1 })}</span>
                   </div>
                </div>
 
@@ -136,26 +185,47 @@ export default function DashboardPage() {
                <div>
                   <SectionHead>Continue Learning</SectionHead>
                   <div className="flex flex-col gap-3">
-                     {IN_PROGRESS.map((course) => (
-                        <div key={course.slug} className="card-base p-5">
+                     {(!courses || courses.length === 0) && (
+                        <div className="card-base p-5">
                            <div className="flex gap-4 items-start">
-                              <div className="text-4xl opacity-40 leading-none shrink-0 mt-1">{course.icon}</div>
+                              <div className="text-4xl opacity-40 leading-none shrink-0 mt-1">⬡</div>
+                              <div className="flex-1 min-w-0">
+                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <span className="font-bold text-sm text-sol-text">No active courses</span>
+                                 </div>
+                                 <p className="text-xs text-sol-muted mb-3">
+                                    Enroll in a course to start learning
+                                 </p>
+                                 <ProgressBar pct={0} />
+                                 <div className="flex justify-between mt-1.5 text-[11px] text-sol-muted">
+                                    <span>0% complete</span>
+                                    <span>0 XP total</span>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     )}
+
+                     {courses && courses?.length > 0 && courses?.map((course, index) => (
+                        <div key={course.courseId} className="card-base p-5">
+                           <div className="flex gap-4 items-start">
+                              <div className="text-4xl opacity-40 leading-none shrink-0 mt-1">{course.thumbnail ?? "⬡"}</div>
                               <div className="flex-1 min-w-0">
                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                                     <span className="font-bold text-sm text-sol-text">{course.title}</span>
                                     <DiffBadge diff={course.difficulty} />
                                  </div>
                                  <p className="text-xs text-sol-muted mb-3">
-                                    Next up: <span className="text-sol-subtle font-semibold">{course.nextLesson}</span>
+                                    Next up: <span className="text-sol-subtle font-semibold">Lesson {progress[index].next + 1}</span>
                                  </p>
-                                 <ProgressBar pct={course.progress} />
+                                 <ProgressBar pct={progress[index].percent} />
                                  <div className="flex justify-between mt-1.5 text-[11px] text-sol-muted">
-                                    <span>{course.progress}% complete</span>
-                                    <span className="text-sol-yellow font-semibold">⚡ {course.xp} XP total</span>
+                                    <span>{progress[index].percent.toFixed(0)}% complete</span>
+                                    <span className="text-sol-yellow font-semibold">⚡ {course.lessonCount * course.xpPerLesson} XP total</span>
                                  </div>
                               </div>
                               <Link
-                                 href={`/courses/${course.slug}/lessons/${course.nextLessonId}`}
+                                 href={`/courses/${course.slug}/lessons/${0}`}
                                  className="sol-btn-primary shrink-0 text-xs py-2 px-4"
                               >
                                  Continue →
@@ -198,8 +268,8 @@ export default function DashboardPage() {
                {/* Streak + XP stat pills */}
                <div className="grid grid-cols-2 gap-3 lg:hidden">
                   {[
-                     { label: "XP Earned", value: USER.xp.toLocaleString(), icon: "⚡", color: "text-sol-yellow" },
-                     { label: "Day Streak", value: USER.streak, icon: "🔥", color: "text-sol-green" },
+                     { label: "XP Earned", value: xp.toLocaleString(), icon: "⚡", color: "text-sol-yellow" },
+                     { label: "Day Streak", value: streak, icon: "🔥", color: "text-sol-green" },
                   ].map((s) => (
                      <div key={s.label} className="card-base p-4 text-center">
                         <div className={`text-2xl font-black ${s.color}`}>{s.icon} {s.value}</div>

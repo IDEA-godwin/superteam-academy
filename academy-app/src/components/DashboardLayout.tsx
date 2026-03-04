@@ -5,21 +5,34 @@ import Sidebar from "~/components/Sidebar";
 import TopBar from "~/components/TopBar";
 import { useSession } from "next-auth/react";
 
+import type { Nav } from "~/components/Sidebar";
+import { useAuthenticate } from "~/hooks/use-authenticate";
+
 interface LayoutProps extends PropsWithChildren {
-   isAdmin?: boolean;
-   disablePadding?: boolean;
+   isAdmin?: boolean
+   adminNavs?: Array<Nav>
+   disablePadding?: boolean
 }
+
+const ADMIN_NAV = [
+   { id: "admin-courses", icon: "📚", labelKey: "courses", path: "/admin/courses" },
+   { id: "admin-settings", icon: "⚙️", labelKey: "settings", path: "/admin/settings" },
+];
 
 export default function DashboardLayout({
    children,
-   isAdmin,
    disablePadding
 }: LayoutProps) {
-   const { data: session } = useSession();
+
+   const { isAdmin, loading } = useAuthenticate()
+
+   useEffect(() => {
+      console.log(isAdmin, loading)
+   }, [isAdmin])
 
    return (
       <div className={`flex h-screen w-full bg-sol-bg font-sans ${disablePadding ? 'overflow-hidden' : ''}`}>
-         <Sidebar />
+         { isAdmin ? <Sidebar navs={ADMIN_NAV} /> : <Sidebar />}
          {/* Offset for fixed sidebar */}
          <div className="mb-16 md:mb-0 md:ml-20 lg:ml-64 flex flex-col flex-1 h-full transition-all duration-200">
             <TopBar />

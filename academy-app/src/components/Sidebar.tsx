@@ -5,18 +5,22 @@ import { useTranslations } from "next-intl";
 
 const NAV = [
    { id: "dashboard", icon: "🏠", labelKey: "dashboard", path: "/dashboard" },
-   { id: "courses", icon: "🔥", labelKey: "courses", path: "/courses" },
+   { id: "courses", icon: "📚", labelKey: "courses", path: "/courses" },
    { id: "leaderboard", icon: "🏆", labelKey: "leaderboard", path: "/leaderboard" },
    { id: "profile", icon: "👤", labelKey: "profile", path: "/profile" },
    { id: "settings", icon: "⚙️", labelKey: "settings", path: "/settings" }
 ];
 
-export default function Sidebar() {
+export type Nav = { id: string, icon: string, labelKey: string, path: string }
+
+export default function Sidebar({ navs = NAV }: { navs?: Array<Nav> }) {
+
+
    const pathname = usePathname();
    const t = useTranslations("Navigation");
 
    return (
-      <aside className="fixed bg-sol-bg bottom-0 md:top-0 left-0 w-full h-16 border-t-2 md:border-t-0 md:w-20 lg:w-64 md:h-screen md:border-r-2 border-sol-text flex flex-row md:flex-col px-2 md:px-3 lg:px-7 py-0 md:py-10 z-[100] md:overflow-y-auto overflow-x-hidden transition-all duration-200">
+      <aside className="fixed bg-sol-bg bottom-0 md:top-0 left-0 w-full h-16 border-t-2 md:border-t-0 md:w-20 lg:w-64 md:h-screen md:border-r-2 border-sol-text flex flex-row md:flex-col px-2 md:px-3 lg:px-7 py-0 md:py-10 z-100 md:overflow-y-auto overflow-x-hidden transition-all duration-200">
 
          {/* Logo */}
          <div className="hidden md:flex items-center justify-center lg:justify-start gap-3 px-0 lg:px-2 pb-6 mb-4 overflow-hidden">
@@ -25,8 +29,8 @@ export default function Sidebar() {
          </div>
 
          {/* Nav items */}
-         <nav className="flex flex-row md:flex-col justify-around md:justify-start gap-1 md:gap-1.5 flex-1 items-center md:items-stretch h-full md:h-auto">
-            {NAV.map(item => {
+         <nav className="flex flex-row md:flex-col justify-around md:justify-start gap-1 md:gap-1.5 flex-1 items-center md:items-stretch h-full md:h-auto overflow-y-auto">
+            {navs && navs.map(item => {
                const isActive = pathname.includes(item.path);
 
                return (
@@ -42,7 +46,7 @@ export default function Sidebar() {
                      ].join(" ")}
                   >
                      <span className="text-[24px] md:text-[20px] w-7 text-center shrink-0">{item.icon}</span>
-                     <span className="hidden lg:inline whitespace-nowrap">{t(item.labelKey)}</span>
+                     <span className="hidden lg:inline whitespace-nowrap">{t(item.labelKey as any)}</span>
                   </Link>
                )
             })}

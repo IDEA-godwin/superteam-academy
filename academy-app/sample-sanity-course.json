@@ -1,0 +1,79 @@
+{
+   "courseId": "intro-to-anchor",
+   "courseName": "Introduction to Anchor Framework",
+   "slug": {
+      "current": "intro-to-anchor"
+   },
+   "description": "Learn the fundamentals of building secure Solana programs using the Anchor framework.",
+   "creator": {
+      "creatorName": "Superteam Academy",
+      "creatorPublicKey": "6ZGTc5GKN58Q6s7m2mApcAhq9kvED1BDvDzSnBN6Yd6F"
+   },
+   "difficulty": "BEGINNER",
+   "track": {
+      "trackId": 1,
+      "trackName": "Solana Core",
+      "trackLevel": 1
+   },
+   "xpPerLesson": 100,
+   "creatorRewardXp": 500,
+   "minCompletionsForReward": 10,
+   "prerequisite": null,
+   "lessonCount": 2,
+   "modules": [
+      {
+         "id": 1,
+         "title": "Module 1: Getting Started",
+         "description": "Setting up your environment and understanding PDAs.",
+         "lessons": [
+            {
+               "title": "What is Anchor?",
+               "lessonType": 1,
+               "videoUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+               "body": [
+                  {
+                     "_type": "block",
+                     "style": "normal",
+                     "children": [
+                        {
+                           "_type": "span",
+                           "text": "Anchor is a framework for Solana's Sealevel runtime providing several convenient developer tools."
+                        }
+                     ]
+                  }
+               ]
+            },
+            {
+               "title": "PDA Seeds and Bump",
+               "lessonType": 3,
+               "objective": "Complete the 'create_vault' instruction so that the vault PDA uses correct seeds and constraints.",
+               "hints": [
+                  "Use `seeds = [b\"vault\", user.key().as_ref()]` in the account constraint.",
+                  "Access the canonical bump via `ctx.bumps.vault` inside the instruction handler.",
+                  "Always store the bump — it saves compute on future validations."
+               ],
+               "starterCode": "use anchor_lang::prelude::*;\n\ndeclare_id!(\"Fg6PaFpo...\");\n\n#[program]\npub mod vault_program {\n    use super::*;\n\n    // TODO: Complete this instruction\n    pub fn create_vault(ctx: Context<CreateVault>) -> Result<()> {\n        let vault = &mut ctx.accounts.vault;\n        \n        // Set the vault owner\n        vault.owner = // ???\n        \n        // Store the canonical bump\n        vault.bump = // ???\n        \n        Ok(())\n    }\n}\n\n#[derive(Accounts)]\npub struct CreateVault<'info> {\n    #[account(\n        init,\n        payer = user,\n        space = 8 + VaultAccount::INIT_SPACE,\n        // TODO: Add seeds and bump constraints\n    )]\n    pub vault: Account<'info, VaultAccount>,\n    \n    #[account(mut)]\n    pub user: Signer<'info>,\n    \n    pub system_program: Program<'info, System>,\n}\n\n#[account]\n#[derive(InitSpace)]\npub struct VaultAccount {\n    pub owner: Pubkey,\n    pub bump: u8,\n}",
+               "solutionCode": "use anchor_lang::prelude::*;\n\ndeclare_id!(\"Fg6PaFpo...\");\n\n#[program]\npub mod vault_program {\n    use super::*;\n\n    pub fn create_vault(ctx: Context<CreateVault>) -> Result<()> {\n        let vault = &mut ctx.accounts.vault;\n        \n        vault.owner = ctx.accounts.user.key();\n        vault.bump  = ctx.bumps.vault;\n        \n        Ok(())\n    }\n}\n\n#[derive(Accounts)]\npub struct CreateVault<'info> {\n    #[account(\n        init,\n        payer = user,\n        space = 8 + VaultAccount::INIT_SPACE,\n        seeds = [b\"vault\", user.key().as_ref()],\n        bump,\n    )]\n    pub vault: Account<'info, VaultAccount>,\n    \n    #[account(mut)]\n    pub user: Signer<'info>,\n    \n    pub system_program: Program<'info, System>,\n}\n\n#[account]\n#[derive(InitSpace)]\npub struct VaultAccount {\n    pub owner: Pubkey,\n    pub bump: u8,\n}",
+               "testCases": [
+                  {
+                     "input": "test_create_vault()",
+                     "expectedOutput": "Ok(())"
+                  }
+               ],
+               "body": [
+                  {
+                     "_type": "block",
+                     "style": "normal",
+                     "children": [
+                        {
+                           "_type": "span",
+                           "text": "Complete the initialization struct to accept a payer."
+                        }
+                     ]
+                  }
+               ]
+            }
+         ]
+      }
+   ]
+}

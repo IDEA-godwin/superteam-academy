@@ -1,13 +1,16 @@
+import { PublicKey } from "@solana/web3.js";
 import { ILesson } from "./lesson";
 import { ITrack } from "./track";
+import { BN } from "@coral-xyz/anchor";
 
 export enum Difficulty {
-   BEGINNER, INTERMIDIATE, ADVANCE
+   BEGINNER = 1, INTERMIDIATE = 2, ADVANCE = 3
 }
 
 export interface ICreator {
    creatorName: string,
-   creatorPubkey: string
+   creatorPubkey?: string,
+   creatorPubKey?: string
 }
 
 export interface IModule {
@@ -18,20 +21,20 @@ export interface IModule {
 }
 
 export interface ICourse {
-   courseId: string,
-   slug: string;
-   title: string;
-   description: string,
-   thumbnail?: string,
-   creator: ICreator,
-   lessonCount: number,
+   courseId: string
+   slug: string
+   title: string
+   description: string
+   thumbnail?: string
+   creator: ICreator
+   lessonCount: number
    modules: Array<IModule>
-   difficulty: Difficulty,
-   xpPerLesson: number,
-   track: ITrack,
-   prerequisite: Array<ICourse> | null,
-   creatorRewardXp: number,
-   minCompletionsForReward: number,
+   difficulty: Difficulty
+   xpPerLesson: number
+   track: ITrack
+   prerequisite: Array<ICourse> | null
+   creatorRewardXp: number
+   minCompletionsForReward: number
 }
 
 export interface ICourseContent {
@@ -50,36 +53,58 @@ export interface ICourseContent {
 
 export interface ICreateCourse {
    courseId: string,
-   creatorPubkey: string,
-   contentTxId: Int8Array, //arweave tx bytes
+   creator: PublicKey,
+   contentTxId: number[], //arweave tx bytes
    lessonCount: number,
    difficulty: number,
    xpPerLesson: number,
    trackId: number,
    trackLevel: number,
-   prerequisite: Array<string> | null,
+   prerequisite: PublicKey | null,
    creatorRewardXp: number,
    minCompletionsForReward: number,
 }
 
 export interface IUpdateCourse {
-   newContentTxId: Int8Array,
+   newContentTxId: Uint8Array,
    newIsActive: boolean,
    newXpPerLesson: number,
    newCreatorRewardXp: number,
    newMinCompletionsForReward: number,
 }
 
-export const buildCreateCourseInterface = (course: ICourse, contentTxId: Int8Array): ICreateCourse => ({
-   contentTxId,
+export interface Course {
+   courseId: string;
+    creator: PublicKey;
+    contentTxId: number[];
+    version: number;
+    lessonCount: number;
+    difficulty: number;
+    xpPerLesson: number;
+    trackId: number;
+    trackLevel: number;
+    prerequisite: PublicKey | null;
+    creatorRewardXp: number;
+    minCompletionsForReward: number;
+    totalCompletions: number;
+    totalEnrollments: number;
+    isActive: boolean;
+    createdAt: BN;
+    updatedAt: BN;
+    reserved: number[];
+    bump: number;
+}
+
+export const buildCreateCourseInterface = (course: ICourse, contentTxId: Uint8Array): ICreateCourse => ({
+   contentTxId: Array.from(contentTxId),
    courseId: course.courseId,
-   creatorPubkey: course.creator.creatorPubkey,
+   creator: new PublicKey(course.creator.creatorPubKey || course.creator.creatorPubkey || ""),
    lessonCount: course.lessonCount,
    difficulty: course.difficulty,
    xpPerLesson: course.xpPerLesson,
    trackId: course.track.trackId,
    trackLevel: course.track.trackLevel,
-   prerequisite: course.prerequisite?.map(c => c.courseId) ?? null,
+   prerequisite: null,
    creatorRewardXp: course.creatorRewardXp,
    minCompletionsForReward: course.minCompletionsForReward,
 })

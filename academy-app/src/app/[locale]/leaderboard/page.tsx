@@ -10,6 +10,10 @@ import { useEffect } from "react";
 import LoadingSplash from "~/components/LoadingSplash";
 import { dataService } from "~/services/data.service";
 import type { LeaderboardUser, CourseFilter } from "~/lib/dummy-data";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useLeveling } from "~/hooks/use-leveling";
+import { useUserProfile } from "~/hooks/queries/useUserProfile";
+import { useLeaderboard } from "~/hooks/queries/useLeaderboard";
 
 const CURRENT_USER = "sol_maya";
 
@@ -25,33 +29,24 @@ const RANK_COLORS: Record<number, string> = {
 
 
 export default function LeaderboardPage() {
+   const { publicKey } = useWallet();
+   const { xp, level } = useLeveling();
+   const { data: profile } = useUserProfile(publicKey?.toBase58());
+
    const [period, setPeriod] = useState<Period>("all-time");
    const [course, setCourse] = useState("all");
    const [expanded, setExpanded] = useState<string | null>(null);
-   const [loading, setLoading] = useState(true);
-   const [allUsers, setAllUsers] = useState<LeaderboardUser[]>([]);
    const [courseFilters, setCourseFilters] = useState<CourseFilter[]>([]);
 
+   const { data: leaderboardData, isLoading: isLeaderboardLoading } = useLeaderboard(period, course);
+
    useEffect(() => {
-      async function loadData() {
-         setLoading(true);
-         const [users, filters] = await Promise.all([
-            dataService.getLeaderboard(period),
-            dataService.getCourseFilters()
-         ]);
-         setAllUsers(users);
-         setCourseFilters(filters);
-         setLoading(false);
-      }
-      loadData();
-   }, [period]);
+      dataService.getCourseFilters().then(setCourseFilters);
+   }, []);
 
-   const filtered = useMemo(() =>
-      allUsers.filter(u => course === "all" || u.courses.includes(course)),
-      [allUsers, course]
-   );
+   const filtered = leaderboardData || [];
 
-   if (loading) {
+   if (isLeaderboardLoading && filtered.length === 0) {
       return (
          <DashboardLayout>
             <LoadingSplash message="Updating rankings..." fullScreen={false} />
@@ -64,7 +59,20 @@ export default function LeaderboardPage() {
 
    const podium = ranked.slice(0, 3);
    const rest = ranked.slice(3);
-   const myEntry = ranked.find(u => u.username === CURRENT_USER);
+
+   // Identify the current user's row — prefer wallet pubkey match, fallback to dummy username
+   const myEntry = publicKey
+      ? (ranked.find(u => u.username === publicKey.toBase58()) || ranked.find(u => u.username === CURRENT_USER))
+      : ranked.find(u => u.username === CURRENT_USER);
+
+   const myEntryDisplay = myEntry ? {
+      ...myEntry,
+      name: publicKey ? (profile?.user?.name || myEntry.name) : myEntry.name,
+      avatar: publicKey ? (profile?.user?.avatar || myEntry.avatar) : myEntry.avatar,
+      xp: publicKey ? xp : myEntry.xp,
+      level: publicKey ? level : myEntry.level,
+      streak: publicKey ? (profile?.user?.streak ?? myEntry.streak) : myEntry.streak,
+   } : null;
 
    return (
       <DashboardLayout>
@@ -107,17 +115,17 @@ export default function LeaderboardPage() {
             </div>
 
             {/* ── My position callout (if not in top 3) ── */}
-            {myEntry && myEntry.filteredRank > 3 && (
+            {myEntryDisplay && myEntryDisplay.filteredRank > 3 && (
                <div className="card-base p-4 border-sol-green/30 bg-sol-green/5 flex items-center gap-4">
-                  <span className="text-2xl">{myEntry.avatar}</span>
+                  <span className="text-2xl">{myEntryDisplay.avatar}</span>
                   <div className="flex-1">
                      <span className="text-sm font-bold text-sol-text">Your position: </span>
                      <span className="text-sm text-sol-subtle">
-                        #{myEntry.filteredRank} · {myEntry.xp.toLocaleString()} XP · Level {myEntry.level}
+                        #{myEntryDisplay.filteredRank} · {myEntryDisplay.xp.toLocaleString()} XP · Level {myEntryDisplay.level}
                      </span>
                   </div>
                   <span className="sol-badge bg-sol-green/10 text-sol-green border-sol-green/30">
-                     🔥 {myEntry.streak}d streak
+                     🔥 {myEntryDisplay.streak}d streak
                   </span>
                </div>
             )}
@@ -147,8 +155,16 @@ export default function LeaderboardPage() {
                   <span className="text-[10px] font-bold text-sol-muted uppercase tracking-widest text-right">XP</span>
                </div>
 
-               {ranked.map((user, i) => {
-                  const isMe = user.username === CURRENT_USER;
+               {ranked.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-3">
+                     <span className="text-4xl opacity-30">🏆</span>
+                     <p className="text-sol-subtle font-semibold">No entries yet for this filter</p>
+                     <p className="text-xs text-sol-muted">Be the first to earn XP and claim the top spot!</p>
+                  </div>
+               ) : ranked.map((user, i) => {
+                  const isMe = publicKey
+                     ? (user.username === publicKey.toBase58() || user.username === CURRENT_USER)
+                     : user.username === CURRENT_USER;
                   const isOpen = expanded === user.username;
                   return (
                      <div key={user.username}>
@@ -202,14 +218,35 @@ export default function LeaderboardPage() {
                            </div>
                         </button>
 
-                        {/* Expanded detail row */}
+                        {/* Expanded detail row — country, twitter, courses */}
                         {isOpen && (
                            <div className={`px-5 py-4 border-b border-sol-border/50 ${isMe ? "bg-sol-green/5" : "bg-sol-surface/40"}`}>
-                              <div className="flex gap-6 flex-wrap text-xs text-sol-subtle">
-                                 <div><span className="text-sol-muted font-semibold">Level: </span>{user.level}</div>
-                                 <div><span className="text-sol-muted font-semibold">Streak: </span>🔥 {user.streak} days</div>
-                                 <div><span className="text-sol-muted font-semibold">XP: </span>⚡ {user.xp.toLocaleString()}</div>
-                                 <div><span className="text-sol-muted font-semibold">Rank: </span>#{user.filteredRank} global</div>
+                              <div className="flex flex-wrap gap-x-6 gap-y-3 text-xs">
+                                 {user.country && (
+                                    <div className="flex items-center gap-1.5">
+                                       <span className="text-sol-muted font-semibold">Country</span>
+                                       <span className="text-base">{user.country}</span>
+                                    </div>
+                                 )}
+                                 {user.twitter && (
+                                    <div className="flex items-center gap-1.5">
+                                       <span className="text-sol-muted font-semibold">Twitter</span>
+                                       <span className="text-sol-green font-mono">{user.twitter}</span>
+                                    </div>
+                                 )}
+                                 <div className="flex items-center gap-1.5">
+                                    <span className="text-sol-muted font-semibold">Courses</span>
+                                    <span className="text-sol-subtle">{user.courses?.length ?? 0} completed</span>
+                                 </div>
+                                 {user.courses && user.courses.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 w-full">
+                                       {user.courses.map(c => (
+                                          <span key={c} className="sol-badge bg-sol-card text-sol-subtle border-sol-border text-[10px]">
+                                             {c.replace(/-/g, ' ')}
+                                          </span>
+                                       ))}
+                                    </div>
+                                 )}
                               </div>
                            </div>
                         )}
@@ -229,6 +266,7 @@ function PodiumSlot({ user, position, height }: { user: any; position: number; h
       <div className="flex flex-col items-center gap-2">
          {position === 1 && <span className="text-2xl">👑</span>}
          <span className="text-3xl">{user.avatar}</span>
+         {user.country && <span className="text-base leading-none">{user.country}</span>}
          <div className="text-center">
             <div className={`text-sm font-black ${isMe ? "text-sol-green" : "text-sol-text"}`}>{user.name}</div>
             <div className="text-xs text-sol-muted">⚡ {user.xp.toLocaleString()}</div>

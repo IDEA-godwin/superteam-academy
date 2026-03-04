@@ -29,7 +29,7 @@ export default function Providers({ children }: PropsWithChildren) {
       <QueryClientProvider client={queryClient}>
          <SessionProvider>
             <WalletProvider>
-               <GlobalLoader />
+               {/* <GlobalLoader /> */}
                {children}
             </WalletProvider>
          </SessionProvider>

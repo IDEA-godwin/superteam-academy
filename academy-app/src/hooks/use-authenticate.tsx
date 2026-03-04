@@ -36,6 +36,7 @@ export function useAuthenticate() {
          return admin.equals(wallet.publicKey);
       } catch (e) {
          // Fallback if config is not initialized or program fails
+         setLoading(false)
          return false;
       }
    };
@@ -48,13 +49,13 @@ export function useAuthenticate() {
       if ((!connected || !wallet) && status !== "authenticated") {
          setAuthenticated(false);
          setIsAdmin(false);
-         setLoading(false)
+         // setLoading(false)
          return;
       }
 
       (async () => {
-         setAuthenticated(true);
          const adminCheck = await checkAdmin();
+         // console.log(adminCheck)
          setIsAdmin(adminCheck);
          setLoading(false)
       })();

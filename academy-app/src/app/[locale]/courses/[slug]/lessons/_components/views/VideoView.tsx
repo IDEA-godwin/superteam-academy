@@ -5,7 +5,7 @@ import MarkdownRenderer from "~/components/MarkdownRenderer";
 interface Props {
    lesson: Lesson;
    completed: boolean;
-   setCompleted: (val: boolean) => void;
+   setCompleted: () => void | Promise<void>;
 }
 
 export default function VideoView({ lesson, completed, setCompleted }: Props) {
@@ -13,7 +13,7 @@ export default function VideoView({ lesson, completed, setCompleted }: Props) {
    useEffect(() => {
       if (!completed) {
          const t = setTimeout(() => {
-            setCompleted(true);
+            setCompleted();
          }, 5000);
          return () => clearTimeout(t);
       }

@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useUserProfile } from "~/hooks/queries/useUserProfile";
 import { useUserGamification } from "~/hooks/queries/useUserGamification";
+import { useLeveling } from "~/hooks/use-leveling";
 import LoadingSplash from "~/components/LoadingSplash";
 
 import type { IUserProfile } from "~/types/user";
@@ -31,8 +32,9 @@ export default function Page() {
 
    const { data: profileData, isLoading: isProfileLoading } = useUserProfile(publicKey?.toBase58());
    const { data: gamificationData, isLoading: isGamificationLoading } = useUserGamification();
+   const { xp, level, isLoading: isLevelingLoading } = useLeveling();
 
-   if (status === 'loading' || isProfileLoading || isGamificationLoading) {
+   if (status === 'loading' || isProfileLoading || isGamificationLoading || isLevelingLoading) {
       return (
          <DashboardLayout>
             <LoadingSplash message="Loading profile data..." fullScreen={false} />
@@ -51,9 +53,9 @@ export default function Page() {
       email: session?.user?.email || dbUser?.email || "No email",
       username: publicKey ? publicKey.toBase58().slice(0, 8) : (session?.user?.email?.split('@')[0] || dbUser?.email?.split('@')[0] || "guest"),
       avatar: session?.user?.image || dbUser?.avatar ? "IMG" : (publicKey ? "👻" : "👤"),
-      level: dbUser?.level ?? 0,
+      level: level,
       rank: dbUser?.rank ?? 0,
-      xp: dbUser?.xp ?? 0,
+      xp: xp,
       streak: dbUser?.streak ?? 0,
       bio: dbUser?.bio || "",
       twitter: dbUser?.twitter || "",
