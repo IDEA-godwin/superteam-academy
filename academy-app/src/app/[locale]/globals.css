@@ -260,6 +260,7 @@
 }
 
 @layer components {
+
    /* Primary: emerald fill */
    .sol-btn-primary {
       @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-sol-green text-[#f7eacb] hover:brightness-110 transition-all duration-200 hover:-translate-y-px active:translate-y-0;
@@ -282,23 +283,27 @@
       box-shadow: var(--shadow-sol-card);
    }
 
+   .sol-badge {
+      @apply inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border w-fit h-fit;
+   }
+
    /* Difficulty badges */
    .badge-beginner {
-      @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border;
+      @apply inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border w-fit h-fit;
       background-color: color-mix(in srgb, #008c4c 12%, transparent);
       color: #008c4c;
       border-color: color-mix(in srgb, #008c4c 30%, transparent);
    }
 
    .badge-intermediate {
-      @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border;
+      @apply inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border w-fit h-fit;
       background-color: color-mix(in srgb, #ffd23f 18%, transparent);
       color: var(--color-sol-yellow-dk);
       border-color: color-mix(in srgb, #ffd23f 40%, transparent);
    }
 
    .badge-advanced {
-      @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border;
+      @apply inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border w-fit h-fit;
       background-color: color-mix(in srgb, #2f6b3f 15%, transparent);
       color: var(--color-sol-forest);
       border-color: color-mix(in srgb, #2f6b3f 30%, transparent);

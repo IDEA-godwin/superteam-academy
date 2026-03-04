@@ -5,5 +5,18 @@
    "IndexPage": {
       "welcomeMessage": "Welcome to Superteam Academy",
       "description": "Your journey to becoming a super developer starts here."
+   },
+   "Navigation": {
+      "dashboard": "Dashboard",
+      "courses": "Courses",
+      "leaderboard": "Leaderboard",
+      "profile": "Profile",
+      "settings": "Settings"
+   },
+   "Hero": {
+      "title": "Learn. Build. Earn",
+      "subtitle": "The premium, gamified path for developers. Go from zero to deploying production-ready dApps while earning on-chain credentials.",
+      "start": "Get Started",
+      "browse": "Browse Courses"
    }
 }

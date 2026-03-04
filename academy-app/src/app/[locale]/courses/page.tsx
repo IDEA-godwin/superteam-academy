@@ -1,7 +1,12 @@
 "use client";
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import Header from "~/components/Header";
+import { Filter } from "lucide-react";
+import {
+   DropdownMenu,
+   DropdownMenuContent,
+   DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 
 type Path = {
    id: string,
@@ -135,8 +140,7 @@ function CourseCard({ course, index }: { course: Course, index: number }) {
                </div>
             )}
             {course.progress === 100 && (
-               <div className="absolute top-3 right-3 bg-sol-green/20 border border-sol-green/50
-                          text-sol-green text-[10px] font-bold px-2 py-0.5 rounded-full">
+               <div className="absolute top-3 right-3 sol-badge bg-sol-green/20 border-sol-green/50 text-sol-green">
                   ✓ Done
                </div>
             )}
@@ -209,17 +213,17 @@ export default function Page() {
 
    return (
       <>
-         <div className="bg-sol-glow border-b border-sol-border">
-            <div className="max-w-7xl mx-auto px-6 pt-14 pb-12">
+         <div className="bg-sol-glow border-sol-border">
+            <div className="max-w-7xl mx-auto px-6 pt-14 pb-6">
                <div className="flex items-start justify-between gap-6 mb-8">
                   <div className="animate-fade-up max-w-xl">
                      <span className="sol-badge bg-sol-green/10 text-sol-green border-sol-green/35 mb-4">
                         ◎ Solana Learning Platform
                      </span>
                      <h1 className="text-4xl font-extrabold text-sol-text leading-tight mt-3 mb-3">
-                        Master Web3<br />
-                        <span className="bg-sol-gradient bg-clip-text text-transparent">
-                           Development
+                        Master Web3 Development<br />
+                        <span className="bg-sol-gradient bg-clip-text">
+
                         </span>
                      </h1>
                      <p className="text-sol-subtle text-base leading-relaxed">
@@ -241,8 +245,6 @@ export default function Page() {
          </div>
 
          <div className="max-w-7xl mx-auto px-6 py-10">
-
-            {/* ── Learning Paths ─────────────────────────────────────────────── */}
             <section className="mb-12">
                <div className="flex items-center gap-3 mb-4">
                   <span className="h-px flex-1 bg-sol-border" />
@@ -257,38 +259,62 @@ export default function Page() {
             </section>
 
             {/* ── Filters + Grid ─────────────────────────────────────────────── */}
-            <div className="flex flex-col lg:flex-row gap-8">
-
-               <aside className="lg:w-52 shrink-0">
-                  <div className="card-base p-5 sticky top-6">
-                     <h3 className="text-[11px] font-bold text-sol-muted uppercase tracking-widest mb-4">Filters</h3>
-                     {[
-                        { label: "Difficulty", items: DIFFICULTIES, val: diff, set: setDiff },
-                        { label: "Topic", items: TOPICS, val: topic, set: setTopic },
-                        { label: "Duration", items: DURATIONS, val: dur, set: setDur },
-                     ].map(g => (
-                        <div key={g.label} className="mb-5 last:mb-0">
-                           <p className="text-[11px] text-sol-muted font-bold uppercase tracking-wider mb-2">{g.label}</p>
-                           <div className="flex flex-col gap-1.5">
-                              {g.items.map(item => (
-                                 <FilterPill key={item} label={item} active={g.val === item} onClick={() => g.set(item)} />
-                              ))}
-                           </div>
-                        </div>
-                     ))}
-                  </div>
-               </aside>
+            <div className="flex flex-col gap-8">
                <div className="flex-1">
                   <div className="flex items-center justify-between mb-4">
                      <p className="text-sol-subtle text-sm">
                         <span className="text-sol-text font-semibold">{filtered.length}</span> courses found
                      </p>
-                     <select className="bg-sol-card border border-sol-border rounded-lg px-3 py-1.5
-                                 text-sol-subtle text-xs focus:outline-none focus:border-sol-green/40 transition-colors">
-                        <option>Sort: Most Popular</option>
-                        <option>Sort: Newest</option>
-                        <option>Sort: Duration ↑</option>
-                     </select>
+                     <div className="flex items-center gap-3">
+                        <DropdownMenu>
+                           <DropdownMenuTrigger className="flex items-center gap-2 bg-sol-card border border-sol-border rounded-lg px-3 py-1.5 text-sol-subtle text-xs focus:outline-none hover:border-sol-green/40 transition-colors">
+                              <Filter className="w-4 h-4" />
+                              Filters
+                              {(diff !== "all" || topic !== "all" || dur !== "all") && (
+                                 <span className="flex items-center justify-center w-4 h-4 rounded-full bg-sol-green text-[10px] text-sol-bg font-bold">!</span>
+                              )}
+                           </DropdownMenuTrigger>
+                           <DropdownMenuContent align="end" className="w-64 p-4 border-sol-border bg-sol-card rounded-xl shadow-xl z-50">
+                              <div className="flex items-center justify-between mb-4 pb-2 border-b border-sol-border">
+                                 <h3 className="text-[11px] font-bold text-sol-muted uppercase tracking-widest">Filters</h3>
+                                 {(diff !== "all" || topic !== "all" || dur !== "all") && (
+                                    <button
+                                       onClick={() => { setDiff("all"); setTopic("all"); setDur("all"); }}
+                                       className="text-[10px] text-sol-muted hover:text-sol-green transition-colors"
+                                    >
+                                       Reset
+                                    </button>
+                                 )}
+                              </div>
+                              <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                 {[
+                                    { label: "Difficulty", items: DIFFICULTIES, val: diff, set: setDiff },
+                                    { label: "Topic", items: TOPICS, val: topic, set: setTopic },
+                                    { label: "Duration", items: DURATIONS, val: dur, set: setDur },
+                                 ].map(g => (
+                                    <div key={g.label} className="mb-5 last:mb-0">
+                                       <p className="text-[11px] text-sol-muted font-bold uppercase tracking-wider mb-2">{g.label}</p>
+                                       <div className="flex flex-wrap gap-1.5">
+                                          {g.items.map(item => (
+                                             <FilterPill key={item} label={item} active={g.val === item} onClick={() => {
+                                                // e.preventDefault(); // prevent dropdown close if needed
+                                                g.set(item)
+                                             }} />
+                                          ))}
+                                       </div>
+                                    </div>
+                                 ))}
+                              </div>
+                           </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <select className="bg-sol-card border border-sol-border rounded-lg px-3 py-1.5
+                                    text-sol-subtle text-xs focus:outline-none focus:border-sol-green/40 transition-colors">
+                           <option>Sort: Most Popular</option>
+                           <option>Sort: Newest</option>
+                           <option>Sort: Duration ↑</option>
+                        </select>
+                     </div>
                   </div>
 
                   {filtered.length === 0 ? (

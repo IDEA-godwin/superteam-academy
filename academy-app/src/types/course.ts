@@ -10,17 +10,42 @@ export interface ICreator {
    creatorPubkey: string
 }
 
+export interface IModule {
+   id: number;
+   title: string;
+   description: string;
+   lessons: Array<ILesson>;
+}
+
 export interface ICourse {
    courseId: string,
+   slug: string;
+   title: string;
+   description: string,
+   thumbnail?: string,
    creator: ICreator,
    lessonCount: number,
-   lessons: Array<ILesson>
+   modules: Array<IModule>
    difficulty: Difficulty,
    xpPerLesson: number,
    track: ITrack,
    prerequisite: Array<ICourse> | null,
    creatorRewardXp: number,
    minCompletionsForReward: number,
+}
+
+export interface ICourseContent {
+   id: string;
+   slug: string;
+   title: string;
+   description: string;
+   thumbnail?: string;
+   creatorName: string;
+   difficulty: Difficulty;
+   challengeCount: number;
+   xpTotal: number;
+   duration: string;
+   modules: Array<IModule>;
 }
 
 export interface ICreateCourse {

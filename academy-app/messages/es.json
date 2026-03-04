@@ -5,5 +5,18 @@
    "IndexPage": {
       "welcomeMessage": "Bienvenido a Superteam Academy",
       "description": "Tu viaje para convertirte en un super desarrollador comienza aquí."
+   },
+   "Navigation": {
+      "learn": "Aprender",
+      "practice": "Práctica",
+      "leaderboard": "Clasificación",
+      "profile": "Perfil",
+      "settings": "Ajustes"
+   },
+   "Hero": {
+      "title": "Aprende. Construye. Gana",
+      "subtitle": "El camino premium y gamificado para desarrolladores. Pasa de cero a desplegar dApps listos para producción mientras ganas credenciales en cadena.",
+      "start": "Empezar",
+      "browse": "Explorar Cursos"
    }
 }

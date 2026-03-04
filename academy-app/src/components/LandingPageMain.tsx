@@ -5,8 +5,11 @@ import { Play, BookOpen, Code, Trophy, Star, ChevronRight } from 'lucide-react';
 import ConnectWallet from './WalletConnect';
 import { Button } from './ui/button';
 import Link from 'next/link';
+import { useTranslations, useLocale } from 'next-intl';
 
 const LandingPageMain = () => {
+   const t = useTranslations("Hero");
+   const locale = useLocale();
    const learningPath = [
       { title: "Solana 101", icon: <BookOpen />, status: "completed", xp: 100 },
       { title: "Rust Fundamentals", icon: <Code />, status: "current", xp: 250 },
@@ -27,16 +30,14 @@ const LandingPageMain = () => {
                >
                   <div>
                      <h1 className="text-5xl md:text-5xl font-extrabold leading-tight mb-4 text-sol-forest dark:text-sol-yellow">
-                        Learn. Build. Earn<br />
-                        {/* <span className="text-sol-green italic">Earn your Place.</span> */}
+                        {t('title')}
                      </h1>
                      <p className="max-w-2xl mx-auto text-md md:text-xl opacity-50 mb-10">
-                        The premium, gamified path for developers. Go from zero to deploying
-                        production-ready dApps while earning on-chain credentials.
+                        {t('subtitle')}
                      </p>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                     <ConnectWallet title='Get Started' />
+                     <ConnectWallet title={t('start')} />
                      <Button
                         variant={"outline"}
                         className="
@@ -45,7 +46,7 @@ const LandingPageMain = () => {
                         hover:shadow-sol-green hover:translate-y-0.5
                         active:translate-y-1 transition-all duration-100
                      ">
-                        <Link href={"/es/courses"}>Browse Courses</Link>
+                        <Link href={`/${locale}/courses`}>{t('browse')}</Link>
                      </Button>
                   </div>
                </motion.div>

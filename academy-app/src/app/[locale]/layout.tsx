@@ -4,6 +4,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Locale, NextIntlClientProvider } from "next-intl";
 import { ThemeProvider } from "next-themes";
 import { routing } from "~/i18n/routing";
+import { GoogleAnalytics } from '@next/third-parties/google';
+import Script from 'next/script';
 
 import Providers from "./provider";
 import "./globals.css";
@@ -47,11 +49,15 @@ export default async function LocaleLayout({
       >
         <NextIntlClientProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-           <Providers>
+            <Providers>
               {children}
             </Providers>
           </ThemeProvider>
         </NextIntlClientProvider>
+        <GoogleAnalytics gaId="G-STACADEMY26" />
+        <Script id="heatmap-analytics" strategy="afterInteractive">
+          {`console.log("Heatmap initialized in privacy-mode.");`}
+        </Script>
       </body>
     </html>
   );

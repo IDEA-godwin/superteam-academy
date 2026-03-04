@@ -1,0 +1,24 @@
+{
+  "users": [
+    {
+      "id": "usr_1772588494819",
+      "level": 0,
+      "rank": 0,
+      "xp": 0,
+      "streak": 0,
+      "skills": {
+        "rust": 10
+      },
+      "email": "godwinaquinas@gmail.com",
+      "name": "Godwin Igwurube",
+      "avatar": "https://avatars.githubusercontent.com/u/52127638?v=4",
+      "github": "Connected via OAuth",
+      "createdAt": "2026-03-04T01:41:34.820Z",
+      "updatedAt": "2026-03-04T01:50:25.977Z",
+      "publicKey": "CpZhJ38CHkEQT2Wvjuo7dGesMBxXAyTTWmLYVU1HGc3L",
+      "bio": "lfg",
+      "twitter": "",
+      "website": ""
+    }
+  ]
+}
