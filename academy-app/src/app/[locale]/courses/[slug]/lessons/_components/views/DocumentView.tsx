@@ -10,15 +10,7 @@ interface Props {
 }
 
 export default function DocumentView({ lesson, completed, setCompleted }: Props) {
-   // Mark document as read after 3 seconds for demonstration
-   useEffect(() => {
-      if (!completed) {
-         const t = setTimeout(() => {
-            setCompleted();
-         }, 3000);
-         return () => clearTimeout(t);
-      }
-   }, [completed, setCompleted]);
+   // Manual completion triggered by the user via the button at the bottom of the page
 
    return (
       <div className="flex-1 overflow-y-auto w-full h-full">
@@ -43,10 +35,20 @@ export default function DocumentView({ lesson, completed, setCompleted }: Props)
                <MarkdownRenderer content={lesson.content} />
             )}
 
-            <div className="mt-16 pt-8 border-t border-sol-border text-center">
-               <p className="text-sol-muted text-sm px-6">
-                  {completed ? "You have completed this document." : "Reading..."}
-               </p>
+            <div className="mt-16 pt-8 border-t border-sol-border flex flex-col items-center">
+               {completed ? (
+                  <p className="text-sol-green font-semibold flex items-center gap-2">
+                     <span className="w-6 h-6 rounded-full bg-sol-green/20 flex items-center justify-center text-sm">✓</span>
+                     You have completed this document.
+                  </p>
+               ) : (
+                  <button
+                     onClick={() => setCompleted()}
+                     className="sol-btn-primary px-8 py-3 text-lg"
+                  >
+                     Complete Lesson
+                  </button>
+               )}
             </div>
          </div>
       </div>

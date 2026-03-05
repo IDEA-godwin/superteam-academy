@@ -33,15 +33,7 @@ function getEmbedUrl(url: string | undefined): string | undefined {
 }
 
 export default function VideoView({ lesson, completed, setCompleted }: Props) {
-   // Mark video as read/watched after 5 seconds for demonstration
-   useEffect(() => {
-      if (!completed) {
-         const t = setTimeout(() => {
-            setCompleted();
-         }, 5000);
-         return () => clearTimeout(t);
-      }
-   }, [completed, setCompleted]);
+   // Manual completion triggered by the user via the button at the bottom of the page
 
    const embedUrl = getEmbedUrl(lesson.videoUrl);
 
@@ -79,9 +71,19 @@ export default function VideoView({ lesson, completed, setCompleted }: Props) {
                <MarkdownRenderer content={lesson.content} />
 
                <div className="mt-8 pt-6 border-t border-sol-border flex items-center justify-between">
-                  <span className="text-sm font-semibold text-sol-muted">
-                     {completed ? "✓ Video completed" : "Watching video..."}
-                  </span>
+                  {completed ? (
+                     <span className="text-sm font-semibold text-sol-green flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-sol-green/20 flex items-center justify-center">✓</span>
+                        Video completed
+                     </span>
+                  ) : (
+                     <button
+                        onClick={() => setCompleted()}
+                        className="sol-btn-primary py-2 px-6 ml-auto"
+                     >
+                        Complete Lesson
+                     </button>
+                  )}
                </div>
             </div>
 
