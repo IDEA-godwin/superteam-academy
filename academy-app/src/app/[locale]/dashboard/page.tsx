@@ -225,7 +225,7 @@ export default function DashboardPage() {
                                  </div>
                               </div>
                               <Link
-                                 href={`/courses/${course.slug}/lessons/${0}`}
+                                 href={`/courses/${course.slug.current}/lessons/${0}`}
                                  className="sol-btn-primary shrink-0 text-xs py-2 px-4"
                               >
                                  Continue →

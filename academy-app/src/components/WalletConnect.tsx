@@ -31,7 +31,6 @@ export default function ConnectWallet({ title }: { title?: string }) {
    const { data: session } = useSession()
 
    useEffect(() => {
-      console.log("loading", loading)
       if (!authenticated && pathname !== '/') push('/');
       if (connected && !loading) {
          if (authenticated && pathname !== "/") return;

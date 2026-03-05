@@ -20,46 +20,56 @@ export function useAuthenticate() {
    const { connection } = useConnection();
    const wallet = useAnchorWallet();
 
-   const checkAdmin = async () => {
-      if (!wallet) return false;
-
-      try {
-         const provider = new anchor.AnchorProvider(connection, wallet, {});
-         anchor.setProvider(provider);
-
-         const configPda = getConfigPda();
-         const program = new anchor.Program(IDL as any);
-
-         // @ts-ignore
-         const config = await program?.account.config.fetch(configPda) as any;
-         const admin: PublicKey = config.authority;
-         return admin.equals(wallet.publicKey);
-      } catch (e) {
-         // Fallback if config is not initialized or program fails
-         setLoading(false)
-         return false;
-      }
-   };
-
    useEffect(() => {
-      if (connected || status === "authenticated") {
-         setAuthenticated(true)
-      }
+      // 1. Determine base authentication
+      const isWalletConnected = connected && !!wallet;
+      const isWeb2Auth = status === "authenticated";
 
-      if ((!connected || !wallet) && status !== "authenticated") {
+      if (isWalletConnected || isWeb2Auth) {
+         setAuthenticated(true);
+      } else if (status !== "loading") {
          setAuthenticated(false);
          setIsAdmin(false);
-         // setLoading(false)
-         return;
       }
 
-      (async () => {
-         const adminCheck = await checkAdmin();
-         // console.log(adminCheck)
-         setIsAdmin(adminCheck);
-         setLoading(false)
-      })();
-   }, [connected, status, wallet, checkAdmin]);
+      // 2. Handle admin check if wallet is connected
+      let isMounted = true;
+      const verifyAdmin = async () => {
+         if (!wallet) {
+            if (isMounted && status !== "loading") setLoading(false);
+            return;
+         }
+
+         try {
+            const provider = new anchor.AnchorProvider(connection, wallet, {});
+            anchor.setProvider(provider);
+            const configPda = getConfigPda();
+            const program = new anchor.Program(IDL as any);
+            // @ts-ignore
+            const config = await program?.account.config.fetch(configPda) as any;
+            const admin: PublicKey = config.authority;
+            if (isMounted) {
+               setIsAdmin(admin.equals(wallet.publicKey));
+               setLoading(false);
+            }
+         } catch (e) {
+            // Fallback if config is not initialized or program fails
+            if (isMounted) {
+               setIsAdmin(false);
+               setLoading(false);
+            }
+         }
+      };
+
+      // Only check admin when wallet state changes
+      if (isWalletConnected) {
+         verifyAdmin();
+      } else if (status !== "loading") {
+         setLoading(false);
+      }
+
+      return () => { isMounted = false; };
+   }, [connected, wallet, status, connection]);
 
    return {
       loading,
