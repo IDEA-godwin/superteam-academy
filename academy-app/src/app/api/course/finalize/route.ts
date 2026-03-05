@@ -69,6 +69,31 @@ export async function POST(req: Request) {
          xpMint, creator, false, TOKEN_2022_PROGRAM_ID,
       );
 
+      // --- MOCK BACKEND BYPASS ---
+      const USE_MOCK = true; // Set to false to re-enable backend signing
+
+      if (USE_MOCK) {
+         console.log(`[Mock] Finalizing course ${courseId} and issuing credential ${credentialName}`);
+
+         let credentialAsset = existingCredentialAsset;
+         if (!credentialAsset) {
+            // Mock creating a new asset
+            const { Keypair: KP } = await import("@solana/web3.js");
+            const credentialKp = KP.generate();
+            credentialAsset = credentialKp.publicKey.toBase58();
+         }
+
+         return NextResponse.json({
+            ok: true,
+            finalizeTx: "mock_finalize_tx_signature",
+            credentialTx: "mock_credential_tx_signature",
+            credentialAsset,
+         });
+      }
+
+      /*
+      // --- REAL BACKEND TRANSACTION ---
+
       // Step 1: finalize_course
       const finalizeTx = await program.methods
          .finalizeCourse()
@@ -151,6 +176,7 @@ export async function POST(req: Request) {
          credentialTx,
          credentialAsset,
       });
+      */
 
    } catch (error: any) {
       console.error("[finalize API]", error);

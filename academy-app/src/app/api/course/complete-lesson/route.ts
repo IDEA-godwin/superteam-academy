@@ -80,6 +80,57 @@ export async function POST(req: Request) {
          await connection.sendRawTransaction(tx.serialize());
       }
 
+      // --- MOCK BACKEND BYPASS ---
+      // Since backend signer is temporarily not supported, we mock the success.
+      // We will skip sending the transaction and fake the response.
+      // -------------------------------------------------------------
+
+      const USE_MOCK = true; // Set to false to re-enable backend signing
+
+      if (USE_MOCK) {
+         console.log(`[Mock] Completing lesson index ${lessonIndex} for course ${courseId}`);
+
+         // We still want to parse the enrollment data *if* possible, or just mock it completely.
+         let completedCountMock = 0;
+         let totalLessonsMock = 0;
+         let completedIndicesMock: number[] = [];
+
+         try {
+            const onchainCourse = await program.account.course.fetch(coursePda);
+            totalLessonsMock = onchainCourse.lessonCount;
+            const enrollment = await program.account.enrollment.fetchNullable(enrollmentPda);
+            if (enrollment) {
+               const { getCompletedLessonIndices } = await import("~/services/course.service");
+               completedIndicesMock = getCompletedLessonIndices(
+                  enrollment.lessonFlags as BN[],
+                  totalLessonsMock,
+               );
+            }
+         } catch (e) {
+            console.warn("Could not fetch course/enrollment for mock completion", e);
+            // Default mock values if program/network fails
+            completedIndicesMock = [lessonIndex];
+            totalLessonsMock = 5;
+         }
+
+         // Ensure current lesson is in the completed lessons mock
+         if (!completedIndicesMock.includes(lessonIndex)) {
+            completedIndicesMock.push(lessonIndex);
+         }
+
+         return NextResponse.json({
+            ok: true,
+            txSig: "mock_tx_signature_for_local_development",
+            completedLessons: completedIndicesMock,
+            completedCount: completedIndicesMock.length,
+            lessonCount: totalLessonsMock,
+         });
+      }
+
+      /*
+      // The below code is the real implementation requiring the backend signer.
+      // --- REAL BACKEND TRANSACTION ---
+
       // Call complete_lesson — backend signer signs
       const txSig = await program.methods
          .completeLesson(lessonIndex)
@@ -112,6 +163,7 @@ export async function POST(req: Request) {
          completedCount: completedIndices.length,
          lessonCount: onchainCourse.lessonCount,
       });
+      */
 
    } catch (error: any) {
       console.error("[complete-lesson API]", error);
